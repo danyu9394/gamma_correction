@@ -3,8 +3,10 @@
 #include <math.h>
 //	gamma correction data remapping
 //	input 12-bit raw data, output 8-bit data put in YUV422 Y(8bit)
-//	2^12=4096
+//	2^12=4096, 2^8 = 256
 
+
+//compile: gcc gamma -lm
 int main()
 {
     double x,y;
