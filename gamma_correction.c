@@ -22,6 +22,7 @@
 #define FILE_NAME_IN "1mm_1.raw"
 #define FILE_NAME_OUT "gamma_corrected.raw"
 
+//TODO:adjust gamma correction value to fit need
 double gamma_val = 1/2.2;
 
 void gamma_correction_filter(unsigned short *img_in, unsigned short *img_out,
