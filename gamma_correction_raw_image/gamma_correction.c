@@ -6,7 +6,7 @@
   format of YUV422 16-bit.The image capture is based on monochrome camera. 
 
   Author: Danyu Li
-  Date: 11/30/18 
+  Date: 12/03/18 
 *****************************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,30 +23,41 @@
 #define FILE_NAME_OUT "gamma_corrected.raw"
 
 //TODO:adjust gamma correction value to fit need
-double gamma_val = 1/2.2;
+double gamma_val = 1.0/3.5;
 
 void gamma_correction_filter(unsigned short *img_in, unsigned short *img_out,
-                                int image_height, int image_width);
+                                int height, int width);
 /*****************************************************************************
 **                           Function definition
 *****************************************************************************/
+/*
+ * apply gamma correction filter to yuv422 yuyv 16-bit raw image
+ * little endian, Y0U0, Y1V0, Y2U1, Y3V1...
+ * gamma correction: new_illuminance = old_illuminance ^ (gamma_val)
+ * args:
+ *      img_in - input image buffer
+ *      img_out - output image buffer
+ *      height - image veritical pixel number
+ *      width - image horizontal pixel number
+ * 
+ */
 void gamma_correction_filter(unsigned short *img_in, unsigned short *img_out,
-                                int image_height, int image_width)
+                                int height, int width)
 {
     unsigned short tmp;
     unsigned char illuminance;
     double illuminance_tmp, illumiance_gamma;
 
-    for (int i = 0; i < image_height; i++) {
-        for (int j = 0; j < image_width; j++) {
-            tmp = img_in[i*image_width + j];
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            tmp = img_in[i*width + j];
             illuminance = (tmp) & 0xff;
             illuminance_tmp = (double)illuminance/256;
             illumiance_gamma = pow(illuminance_tmp, gamma_val);
             illumiance_gamma = illumiance_gamma * 256;
             illuminance = (unsigned char)illumiance_gamma; 
             tmp = ((0x80 <<8)|illuminance);
-            img_out[i*image_width+j] = tmp; 
+            img_out[i*width+j] = tmp; 
             
         }
     }
@@ -54,6 +65,7 @@ void gamma_correction_filter(unsigned short *img_in, unsigned short *img_out,
 
 }
 
+//TODO: Overwrite input raw image file name, image resolution
 int main(int argc, char *argv[])
 {
     int image_width;
@@ -88,6 +100,7 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    //allocate input and output image buffer
     img = (unsigned short *)malloc(image_width*image_height* \
                 sizeof(unsigned short));
     img_out = (unsigned short *)calloc(image_width*image_height,
@@ -107,6 +120,7 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
+    //get image buffer from input raw file
     ret = fread(img, sizeof(unsigned short), image_width * image_height, fp);
     if (ret != image_width * image_height)
     {
@@ -122,12 +136,11 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    //apply gamma correction
     gamma_correction_filter(img, img_out, image_height, image_width);
-
     fwrite(img_out, sizeof(unsigned short), image_height*image_width, fp_out);
 
     fclose(fp_out);
-
     free(img);
     free(img_out);
     
